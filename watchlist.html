@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Astle's Watchlist</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#141414; --surface:#1c1c1c; --surface2:#2a2a2a;
+  --accent:#e50914; --green:#46d369; --amber:#f5a623;
+  --text:#f5f5f5; --muted:#8c8c8c; --border:#333;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:Helvetica Neue,Arial,sans-serif;line-height:1.4}
+.wrap{max-width:960px;margin:0 auto;padding:24px 18px 80px}
+header{display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:10px;margin-bottom:6px}
+header h1{font-family:'Bebas Neue',sans-serif;letter-spacing:1px;font-size:2.3rem;color:var(--accent);margin:0}
+.stat{color:var(--muted);font-size:.9rem}
+.tabs{display:flex;gap:8px;margin:22px 0 18px;flex-wrap:wrap}
+.tab{background:var(--surface);border:1px solid var(--border);color:var(--muted);padding:7px 16px;border-radius:20px;cursor:pointer;font-size:.9rem}
+.tab.active{background:var(--accent);color:#fff;border-color:var(--accent);font-weight:600}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:8px;margin-bottom:12px;overflow:hidden}
+.card-head{display:flex;align-items:center;gap:10px;padding:14px 16px;cursor:pointer}
+.card-head .title{flex:1;min-width:0}
+.card-head h3{margin:0;font-size:1.05rem}
+.card-head .meta{color:var(--muted);font-size:.82rem;margin-top:2px}
+.rating{background:var(--surface2);color:var(--amber);font-size:.78rem;padding:2px 8px;border-radius:5px;white-space:nowrap}
+.bar{height:5px;background:var(--surface2);border-radius:3px;overflow:hidden;margin-top:8px}
+.bar>div{height:100%;background:var(--green)}
+.pct{font-size:.78rem;color:var(--muted);white-space:nowrap}
+.iconbtn{background:none;border:none;color:var(--muted);cursor:pointer;font-size:1rem;padding:4px}
+.iconbtn:hover{color:var(--text)}
+.iconbtn.active{color:var(--accent)}
+.body{display:none;padding:0 16px 16px;border-top:1px solid var(--border)}
+.body.open{display:block}
+.arc{margin-top:12px}
+.arc-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.arc-head span{font-size:.85rem;color:var(--muted)}
+.arc-head button{background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:.75rem;padding:3px 9px;border-radius:5px;cursor:pointer}
+.eps{display:flex;flex-wrap:wrap;gap:5px}
+.ep{width:28px;height:28px;border-radius:5px;background:var(--surface2);border:1px solid var(--border);color:var(--muted);display:flex;align-items:center;justify-content:center;font-size:.68rem;cursor:pointer;user-select:none}
+.ep.filler{box-shadow:inset 0 0 0 2px var(--amber)}
+.ep.watched{background:var(--green);color:#0b1f0f;border-color:var(--green)}
+.arcbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+.arcbar select,.arcbar input{background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:6px 10px;border-radius:6px;font-size:.85rem}
+.arcbar input{width:120px}
+.arcbar button{background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:.78rem;padding:6px 12px;border-radius:6px;cursor:pointer}
+.arc-covers{font-size:.78rem;color:var(--muted);margin-bottom:8px}
+.legend{font-size:.75rem;color:var(--muted);margin:4px 0 10px}
+.legend .dot{display:inline-block;width:10px;height:10px;border-radius:3px;box-shadow:inset 0 0 0 2px var(--amber);margin-right:4px;vertical-align:middle}
+form.add{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:16px;margin-top:20px}
+form.add h3{margin-bottom:12px;font-weight:600}
+.row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+.row input,.row select,.row textarea{flex:1;min-width:110px;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:8px 10px;border-radius:6px;font-size:.9rem;font-family:inherit}
+.row button{background:var(--accent);border:none;color:#fff;font-weight:600;padding:8px 18px;border-radius:6px;cursor:pointer}
+.check{display:flex;align-items:center;gap:8px;font-size:.88rem;color:var(--muted);margin-bottom:10px}
+.hide{display:none !important}
+.empty{color:var(--muted);text-align:center;padding:30px 0}
+.rw-row{display:flex;align-items:center;gap:10px;padding:12px 16px;background:var(--surface);border:1px solid var(--border);border-radius:8px;margin-bottom:8px}
+.rw-row .meta{color:var(--muted);font-size:.82rem}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>ASTLE'S WATCHLIST</h1>
+  <div class="stat" id="overallStat"></div>
+</header>
+<div class="tabs" id="tabs"></div>
+<div id="list"></div>
+<form class="add" id="addForm">
+  <h3>Add a title</h3>
+  <div class="row">
+    <input id="fTitle" placeholder="Title" required>
+    <input id="fYear" placeholder="Year" style="max-width:90px">
+    <input id="fRating" placeholder="IMDb rating" style="max-width:110px">
+    <select id="fCat">
+      <option value="hollywood">Hollywood Movie</option>
+      <option value="regional">Regional Movie</option>
+      <option value="anime">Anime</option>
+      <option value="series">Web Series</option>
+    </select>
+  </div>
+  <label class="check"><input type="checkbox" id="fArcMode"> Arc-based show with fillers (like One Piece) — number episodes continuously & flag fillers</label>
+
+  <div id="normalFields" class="row">
+    <input id="fSeasons" type="number" min="1" value="1" placeholder="Seasons">
+    <input id="fEpisodes" type="number" min="1" value="1" placeholder="Episodes / season">
+  </div>
+
+  <div id="arcFields" class="hide">
+    <div class="row">
+      <input id="fTotalEp" type="number" min="1" placeholder="Total episodes so far">
+      <input id="fFillers" placeholder="Filler episodes, e.g. 54-60,98,99">
+    </div>
+    <div class="row">
+      <textarea id="fArcs" rows="2" placeholder="Arcs, one per line (optional): Name:start-end&#10;e.g. East Blue:1-61"></textarea>
+    </div>
+  </div>
+  <div class="row"><button type="button" id="addBtn">Add</button></div>
+</form>
+</div>
+<script>
+const CATS = {hollywood:'Hollywood',regional:'Regional',anime:'Anime',series:'Web Series'};
+
+function expandRanges(str){
+  const out=[];
+  str.split(',').map(s=>s.trim()).filter(Boolean).forEach(part=>{
+    const m = part.match(/^(\d+)(?:-(\d+))?$/);
+    if(!m) return;
+    const a=+m[1], b=m[2]?+m[2]:a;
+    for(let i=a;i<=b;i++) out.push(i);
+  });
+  return out;
+}
+const OP_FILLERS = expandRanges("54-60,98,99,102,131-143,196-206,220-225,279-283,291,292,303,317-319,326-336,382-384,406-407,426-429,457,458,492,542,575-578,590,626,627,747-750,780-782,895,896,907,1029,1030");
+const OP_ARCS = [
+  {name:"East Blue",start:1,end:61},{name:"Alabasta",start:62,end:130},
+  {name:"Post-Alabasta (filler)",start:131,end:144},{name:"Jaya",start:145,end:152},
+  {name:"Skypiea",start:153,end:195},{name:"G-8 (filler)",start:196,end:206},
+  {name:"Water 7",start:207,end:325},
+  {name:"Thriller Bark",start:326,end:384},{name:"Summit War",start:385,end:516},
+  {name:"Fish-Man Island",start:517,end:574},{name:"Dressrosa",start:575,end:746},
+  {name:"Zou / Whole Cake / Reverie",start:747,end:889},{name:"Wano Country",start:890,end:1085},
+  {name:"Egghead / Elbaph",start:1086,end:1180},
+];
+
+const SEED_SIMPLE = [
+ {title:"The Shawshank Redemption",year:1994,rating:9.3,cat:"hollywood",seasons:[{name:"Movie",total:1}]},
+ {title:"The Godfather",year:1972,rating:9.2,cat:"hollywood",seasons:[{name:"Movie",total:1}]},
+ {title:"The Dark Knight",year:2008,rating:9.0,cat:"hollywood",seasons:[{name:"Movie",total:1}]},
+ {title:"Inception",year:2010,rating:8.8,cat:"hollywood",seasons:[{name:"Movie",total:1}]},
+ {title:"Parasite",year:2019,rating:8.5,cat:"hollywood",seasons:[{name:"Movie",total:1}]},
+ {title:"Interstellar",year:2014,rating:8.7,cat:"hollywood",seasons:[{name:"Movie",total:1}]},
+ {title:"Spirited Away",year:2001,rating:8.6,cat:"hollywood",seasons:[{name:"Movie",total:1}]},
+ {title:"Oppenheimer",year:2023,rating:8.3,cat:"hollywood",seasons:[{name:"Movie",total:1}]},
+
+ {title:"Vikram",year:2022,rating:8.3,cat:"regional",seasons:[{name:"Movie",total:1}]},
+ {title:"Super Deluxe",year:2019,rating:8.3,cat:"regional",seasons:[{name:"Movie",total:1}]},
+ {title:"96",year:2018,rating:8.3,cat:"regional",seasons:[{name:"Movie",total:1}]},
+ {title:"Asuran",year:2019,rating:8.4,cat:"regional",seasons:[{name:"Movie",total:1}]},
+ {title:"Jai Bhim",year:2021,rating:8.2,cat:"regional",seasons:[{name:"Movie",total:1}]},
+ {title:"Vada Chennai",year:2018,rating:8.4,cat:"regional",seasons:[{name:"Movie",total:1}]},
+ {title:"Pariyerum Perumal",year:2018,rating:8.6,cat:"regional",seasons:[{name:"Movie",total:1}]},
+ {title:"Visaranai",year:2015,rating:8.6,cat:"regional",seasons:[{name:"Movie",total:1}]},
+ {title:"Soorarai Pottru",year:2020,rating:8.6,cat:"regional",seasons:[{name:"Movie",total:1}]},
+ {title:"Vikram Vedha",year:2017,rating:8.4,cat:"regional",seasons:[{name:"Movie",total:1}]},
+
+ {title:"Attack on Titan",year:2013,rating:9.0,cat:"anime",seasons:[
+   {name:"Season 1",total:25},{name:"Season 2",total:12},{name:"Season 3",total:22},{name:"Final Season",total:32}]},
+ {title:"Death Note",year:2006,rating:9.0,cat:"anime",seasons:[{name:"Season 1",total:37}]},
+ {title:"Chainsaw Man",year:2022,rating:8.5,cat:"anime",seasons:[{name:"Season 1",total:12}]},
+ {title:"Demon Slayer",year:2019,rating:8.5,cat:"anime",seasons:[
+   {name:"Foundation",total:26},{name:"Entertainment District",total:11},
+   {name:"Swordsmith Village",total:11},{name:"Hashira Training",total:8}]},
+ {title:"Jujutsu Kaisen",year:2020,rating:8.6,cat:"anime",seasons:[{name:"Season 1",total:24},{name:"Season 2",total:23}]},
+ {title:"Vinland Saga",year:2019,rating:8.7,cat:"anime",seasons:[{name:"Season 1",total:24},{name:"Season 2",total:24}]},
+ {title:"Fullmetal Alchemist: Brotherhood",year:2009,rating:9.1,cat:"anime",seasons:[{name:"Full run",total:64}]},
+
+ {title:"Breaking Bad",year:2008,rating:9.5,cat:"series",seasons:[
+   {name:"S1",total:7},{name:"S2",total:13},{name:"S3",total:13},{name:"S4",total:13},{name:"S5",total:16}]},
+ {title:"Game of Thrones",year:2011,rating:9.2,cat:"series",seasons:[
+   {name:"S1",total:10},{name:"S2",total:10},{name:"S3",total:10},{name:"S4",total:10},
+   {name:"S5",total:10},{name:"S6",total:10},{name:"S7",total:7},{name:"S8",total:6}]},
+ {title:"Dark",year:2017,rating:8.7,cat:"series",seasons:[{name:"S1",total:10},{name:"S2",total:8},{name:"S3",total:8}]},
+ {title:"Chernobyl",year:2019,rating:9.3,cat:"series",seasons:[{name:"Miniseries",total:5}]},
+ {title:"The Boys",year:2019,rating:8.7,cat:"series",seasons:[{name:"S1",total:8},{name:"S2",total:8},{name:"S3",total:8},{name:"S4",total:8}]},
+ {title:"Better Call Saul",year:2015,rating:8.9,cat:"series",seasons:[
+   {name:"S1",total:10},{name:"S2",total:10},{name:"S3",total:10},{name:"S4",total:10},{name:"S5",total:10},{name:"S6",total:13}]},
+ {title:"Money Heist",year:2017,rating:8.2,cat:"series",seasons:[
+   {name:"S1",total:13},{name:"S2",total:9},{name:"S3",total:8},{name:"S4",total:8},{name:"S5",total:10}]},
+ {title:"Arcane",year:2021,rating:9.0,cat:"series",seasons:[{name:"S1",total:9},{name:"S2",total:9}]},
+];
+
+function loadItems(){
+  const raw = localStorage.getItem('watchlist-items');
+  if(raw){
+    const parsed = JSON.parse(raw);
+    let changed=false;
+    parsed.forEach(it=>{
+      if(it.cat==='movie'){ it.cat='hollywood'; changed=true; }
+      if(it.arcMode && (!Array.isArray(it.arcs)||!Array.isArray(it.fillers)||!Array.isArray(it.watched))){
+        it.arcMode=false;
+        it.seasons = it.seasons||[{name:'Season 1', total:1, watched:[false]}];
+        changed=true;
+      }
+      if(!it.arcMode && !Array.isArray(it.seasons)){
+        it.seasons=[{name:'Season 1', total:1, watched:[false]}];
+        changed=true;
+      }
+      if(it.id==='onepiece'){
+        const oldWatched = it.watched||[];
+        it.arcs = OP_ARCS; it.fillers = OP_FILLERS; it.totalEpisodes = 1180;
+        const w = Array(1180).fill(false);
+        for(let i=0;i<Math.min(oldWatched.length,1180);i++) w[i]=oldWatched[i];
+        it.watched = w;
+        changed=true;
+      }
+    });
+    if(changed) save(parsed);
+    return parsed;
+  }
+  const items = SEED_SIMPLE.map((s,i)=>({
+    id:'seed'+i, title:s.title, year:s.year, rating:s.rating, cat:s.cat, arcMode:false,
+    seasons: s.seasons.map(se=>({name:se.name, total:se.total, watched:Array(se.total).fill(false)}))
+  }));
+  items.push({
+    id:'onepiece', title:"One Piece", year:1999, rating:8.7, cat:"anime", arcMode:true,
+    totalEpisodes:1180, arcs:OP_ARCS, fillers:OP_FILLERS,
+    watched: Array(1180).fill(false)
+  });
+  save(items);
+  return items;
+}
+function save(items){ localStorage.setItem('watchlist-items', JSON.stringify(items)); }
+function loadRewatch(){ return JSON.parse(localStorage.getItem('watchlist-rewatch')||'[]'); }
+function saveRewatch(r){ localStorage.setItem('watchlist-rewatch', JSON.stringify(r)); }
+
+let items = loadItems();
+let rewatch = loadRewatch();
+let activeTab = 'all';
+let openIds = new Set();
+
+function itemProgress(it){
+  if(it.arcMode){
+    const done = it.watched.filter(Boolean).length;
+    return {total:it.totalEpisodes, done, pct: Math.round(done/it.totalEpisodes*100)};
+  }
+  let total=0, done=0;
+  it.seasons.forEach(s=>{ total+=s.total; done+=s.watched.filter(Boolean).length; });
+  return {total,done,pct: total? Math.round(done/total*100):0};
+}
+function isRewatch(id){ return rewatch.some(r=>r.id===id); }
+function toggleRewatch(it){
+  if(isRewatch(it.id)) rewatch = rewatch.filter(r=>r.id!==it.id);
+  else rewatch.push({id:it.id, title:it.title, cat:it.cat});
+  saveRewatch(rewatch);
+}
+
+const openBlocks = {};
+function renderArcBody(it){
+  const size=100;
+  const totalBlocks = Math.ceil(it.totalEpisodes/size);
+  const cur = openBlocks[it.id] ?? 0;
+  const start = cur*size+1, end = Math.min(it.totalEpisodes,(cur+1)*size);
+  const covers = it.arcs.filter(a=>a.end>=start && a.start<=end).map(a=>a.name).join(' → ');
+  let cells='';
+  for(let ep=start; ep<=end; ep++){
+    const idx=ep-1, w=it.watched[idx], isF=it.fillers.includes(ep);
+    cells += `<div class="ep ${w?'watched':''} ${isF?'filler':''}" data-arcep="${it.id}:${idx}" id="${it.id}-ep${ep}">${ep}</div>`;
+  }
+  const opts = Array.from({length:totalBlocks},(_,i)=>{
+    const s=i*size+1, e=Math.min(it.totalEpisodes,(i+1)*size);
+    return `<option value="${i}" ${i===cur?'selected':''}>EPS: ${s}-${e}</option>`;
+  }).join('');
+  const doneInBlock = it.watched.slice(start-1,end).filter(Boolean).length;
+  return `<div class="arcbar">
+      <select data-block="${it.id}">${opts}</select>
+      <input type="number" placeholder="Jump to ep #" min="1" max="${it.totalEpisodes}" data-jump="${it.id}">
+      <button data-blockall="${it.id}:${start}:${end}">${it.watched.slice(start-1,end).every(Boolean)?'Unmark range':'Mark range'}</button>
+    </div>
+    <div class="arc-covers">Covers: ${covers||'—'} · ${doneInBlock}/${end-start+1} watched</div>
+    <div class="eps">${cells}</div>
+    <div class="legend"><span class="dot"></span>outlined = filler episode</div>`;
+}
+function renderSeasonBody(it){
+  return it.seasons.map((s,si)=>`
+    <div class="arc">
+      <div class="arc-head"><span>${s.name} — ${s.watched.filter(Boolean).length}/${s.total}</span>
+      <button data-toggleseason="${it.id}:${si}">${s.watched.every(Boolean)?'Unmark all':'Mark all'}</button></div>
+      <div class="eps">${s.watched.map((w,ei)=>`<div class="ep ${w?'watched':''}" data-ep="${it.id}:${si}:${ei}">${ei+1}</div>`).join('')}</div>
+    </div>`).join('');
+}
+
+function render(){
+  const tabs = document.getElementById('tabs');
+  const cats = ['all','hollywood','regional','anime','series','rewatch'];
+  tabs.innerHTML = cats.map(c=>`<div class="tab ${c===activeTab?'active':''}" data-tab="${c}">${c==='all'?'All':c==='rewatch'?'Rewatch':CATS[c]}</div>`).join('');
+  tabs.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{activeTab=t.dataset.tab; render();});
+
+  let totalAll=0, doneAll=0;
+  items.forEach(it=>{const p=itemProgress(it); totalAll+=p.total; doneAll+=p.done;});
+  document.getElementById('overallStat').textContent =
+    totalAll? `${doneAll}/${totalAll} episodes watched (${Math.round(doneAll/totalAll*100)}%)` : '';
+
+  const list = document.getElementById('list');
+  document.getElementById('addForm').style.display = activeTab==='rewatch' ? 'none':'block';
+
+  if(activeTab==='rewatch'){
+    if(!rewatch.length){ list.innerHTML='<div class="empty">Nothing marked for rewatch yet. Use the 🔁 button on any title.</div>'; return; }
+    list.innerHTML = rewatch.map(r=>`<div class="rw-row"><div style="flex:1"><b>${r.title}</b><div class="meta">${CATS[r.cat]||r.cat}</div></div><button class="iconbtn" data-rwremove="${r.id}">✕</button></div>`).join('');
+    list.querySelectorAll('[data-rwremove]').forEach(el=>el.onclick=()=>{
+      rewatch = rewatch.filter(r=>r.id!==el.dataset.rwremove); saveRewatch(rewatch); render();
+    });
+    return;
+  }
+
+  const shown = items.filter(it=>activeTab==='all'||it.cat===activeTab);
+  if(!shown.length){ list.innerHTML = '<div class="empty">Nothing here yet — add a title below.</div>'; return; }
+
+  list.innerHTML = shown.map(it=>{
+    const p = itemProgress(it);
+    const open = openIds.has(it.id);
+    return `<div class="card">
+      <div class="card-head" data-open="${it.id}">
+        <div class="title">
+          <h3>${it.title}</h3>
+          <div class="meta">${it.year||''} · ${CATS[it.cat]||'Title'}</div>
+          <div class="bar"><div style="width:${p.pct}%"></div></div>
+        </div>
+        ${it.rating?`<div class="rating">★ ${it.rating}</div>`:''}
+        <div class="pct">${p.pct}%</div>
+        <button class="iconbtn ${isRewatch(it.id)?'active':''}" data-rw="${it.id}" title="Add to rewatch">🔁</button>
+        <button class="iconbtn" data-del="${it.id}" title="Remove">✕</button>
+      </div>
+      <div class="body ${open?'open':''}">${it.arcMode?renderArcBody(it):renderSeasonBody(it)}</div>
+    </div>`;
+  }).join('');
+
+  list.querySelectorAll('[data-open]').forEach(el=>el.onclick=(e)=>{
+    if(e.target.closest('[data-del],[data-rw]')) return;
+    const id = el.dataset.open;
+    openIds.has(id)?openIds.delete(id):openIds.add(id);
+    render();
+  });
+  list.querySelectorAll('[data-del]').forEach(el=>el.onclick=(e)=>{
+    e.stopPropagation(); items = items.filter(it=>it.id!==el.dataset.del); save(items); render();
+  });
+  list.querySelectorAll('[data-rw]').forEach(el=>el.onclick=(e)=>{
+    e.stopPropagation(); toggleRewatch(items.find(it=>it.id===el.dataset.rw)); render();
+  });
+  list.querySelectorAll('[data-ep]').forEach(el=>el.onclick=(e)=>{
+    e.stopPropagation();
+    const [id,si,ei] = el.dataset.ep.split(':');
+    const it = items.find(x=>x.id===id);
+    it.seasons[si].watched[ei] = !it.seasons[si].watched[ei];
+    save(items); render();
+  });
+  list.querySelectorAll('[data-arcep]').forEach(el=>el.onclick=(e)=>{
+    e.stopPropagation();
+    const [id,idx] = el.dataset.arcep.split(':');
+    const it = items.find(x=>x.id===id);
+    it.watched[idx] = !it.watched[idx];
+    save(items); render();
+  });
+  list.querySelectorAll('[data-toggleseason]').forEach(el=>el.onclick=(e)=>{
+    e.stopPropagation();
+    const [id,si] = el.dataset.toggleseason.split(':');
+    const it = items.find(x=>x.id===id);
+    const all = it.seasons[si].watched.every(Boolean);
+    it.seasons[si].watched = it.seasons[si].watched.map(()=>!all);
+    save(items); render();
+  });
+  list.querySelectorAll('[data-blockall]').forEach(el=>el.onclick=(e)=>{
+    e.stopPropagation();
+    const [id,start,end] = el.dataset.blockall.split(':');
+    const it = items.find(x=>x.id===id);
+    const s=+start,en=+end;
+    const allOn = it.watched.slice(s-1,en).every(Boolean);
+    for(let i=s-1;i<en;i++) it.watched[i]=!allOn;
+    save(items); render();
+  });
+  list.querySelectorAll('[data-block]').forEach(el=>el.onchange=(e)=>{
+    e.stopPropagation(); openBlocks[el.dataset.block]=+el.value; render();
+  });
+  list.querySelectorAll('[data-jump]').forEach(el=>{
+    el.onclick=(e)=>e.stopPropagation();
+    el.onchange=(e)=>{
+      const id=el.dataset.jump, val=parseInt(el.value);
+      const it = items.find(x=>x.id===id);
+      if(!val||val<1||val>it.totalEpisodes) return;
+      openBlocks[id]=Math.floor((val-1)/100);
+      render();
+      setTimeout(()=>{
+        const cell = document.getElementById(`${id}-ep${val}`);
+        if(cell){ cell.scrollIntoView({block:'center'}); cell.style.outline='2px solid #fff'; }
+      },0);
+    };
+  });
+}
+
+document.getElementById('fArcMode').onchange = (e)=>{
+  document.getElementById('normalFields').classList.toggle('hide', e.target.checked);
+  document.getElementById('arcFields').classList.toggle('hide', !e.target.checked);
+};
+
+function addItem(){
+  const title = document.getElementById('fTitle').value.trim();
+  if(!title) return;
+  const cat = document.getElementById('fCat').value;
+  const year = document.getElementById('fYear').value.trim();
+  const rating = document.getElementById('fRating').value.trim();
+  const arcMode = document.getElementById('fArcMode').checked;
+
+  if(arcMode){
+    const total = Math.max(1, parseInt(document.getElementById('fTotalEp').value)||1);
+    const fillers = expandRanges(document.getElementById('fFillers').value);
+    let arcsText = document.getElementById('fArcs').value.trim();
+    let arcs;
+    if(arcsText){
+      arcs = arcsText.split('\n').map(l=>{
+        const [name,range] = l.split(':');
+        const [s,en] = (range||'').split('-').map(x=>parseInt(x));
+        return {name:(name||'Arc').trim(), start:s||1, end:en||total};
+      }).filter(a=>a.start&&a.end);
+    } else {
+      arcs = [{name:'Full run', start:1, end:total}];
+    }
+    items.push({id:'u'+Date.now(), title, year, rating, cat, arcMode:true, totalEpisodes:total, arcs, fillers, watched:Array(total).fill(false)});
+  } else {
+    const nSeasons = Math.max(1, parseInt(document.getElementById('fSeasons').value)||1);
+    const nEps = Math.max(1, parseInt(document.getElementById('fEpisodes').value)||1);
+    const seasons = Array.from({length:nSeasons}, (_,i)=>({
+      name: nSeasons===1?'Season 1':`Season ${i+1}`, total:nEps, watched:Array(nEps).fill(false)
+    }));
+    items.push({id:'u'+Date.now(), title, year, rating, cat, arcMode:false, seasons});
+  }
+  save(items);
+  document.getElementById('addForm').reset();
+  document.getElementById('normalFields').classList.remove('hide');
+  document.getElementById('arcFields').classList.add('hide');
+  render();
+}
+document.getElementById('addBtn').onclick = addItem;
+document.getElementById('fTitle').addEventListener('keydown', (e)=>{ if(e.key==='Enter'){ e.preventDefault(); addItem(); } });
+
+render();
+</script>
+</body>
+</html>
